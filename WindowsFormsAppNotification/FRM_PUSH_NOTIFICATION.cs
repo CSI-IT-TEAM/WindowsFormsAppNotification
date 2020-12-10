@@ -185,7 +185,7 @@ namespace WindowsFormsAppNotification
                                 MC_NM = model.MachineCD,
                                 AREA = string.Concat(model.Line_Nm, " - ", model.Area_NM),
                                 DESC = model.Warning,
-                                TIME = DateTime.Now.ToString("dd/MM HH:mm"),
+                                TIME = DateTime.Now.ToString(),
                                 KIND_IMG = "BACKPART",
                                 picture_url = model.urlImages
                             }
@@ -203,7 +203,7 @@ namespace WindowsFormsAppNotification
                                 MC_NM = model.MachineCD,
                                 AREA = string.Concat(model.Line_Nm, " - ", model.Area_NM),
                                 DESC = model.Warning,
-                                TIME = DateTime.Now.ToString("dd/MM HH:mm"),
+                                TIME = DateTime.Now.ToString(),
                                 KIND_IMG = "BACKPART",
                                 picture_url = model.urlImages
                             },
@@ -310,8 +310,8 @@ namespace WindowsFormsAppNotification
         private void btnTest_Click(object sender, EventArgs e)
         {
             List<NotifysModel> lstModel = new List<WindowsFormsAppNotification.NotifysModel>();
-            lstModel.Add(new NotifysModel("ANDROID", "Xin Chào!", "Hôm nay bạn thế nào?", "", "013", "Plant G", "SomeWhere", "BP-001-TEST-MACHINE", "THIS IS A TEST MACHINE", "Thông báo nhiệt độ"));
-            lstModel.Add(new NotifysModel("IOS", "Xin Chào!", "Hôm nay bạn thế nào?", "", "013", "Plant G", "SomeWhere", "BP-001-TEST-MACHINE", "THIS IS A TEST MACHINE", "Thông báo nhiệt độ"));
+            lstModel.Add(new NotifysModel("ANDROID", "Phước Xin Chào!", "Hôm nay bạn thế nào?", "", "013", "Plant G", "SomeWhere", "BP-001-TEST-MACHINE", "THIS IS A TEST MACHINE", "Thông báo nhiệt độ"));
+            lstModel.Add(new NotifysModel("IOS", "Phước Xin Chào!", "Hôm nay bạn thế nào?", "", "013", "Plant G", "SomeWhere", "BP-001-TEST-MACHINE", "THIS IS A TEST MACHINE", "Thông báo nhiệt độ"));
             foreach (NotifysModel model in lstModel)
             {
                 string res = SendPushNotification(model);
