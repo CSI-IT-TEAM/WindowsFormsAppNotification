@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using FirebaseAdmin.Messaging;
+using Newtonsoft.Json.Linq;
 using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
@@ -13,15 +14,19 @@ using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 using ZaloDotNetSDK;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+using Newtonsoft.Json;
 
 namespace WindowsFormsAppNotification
 {
-    public partial class CRUD_FRM_NOTIFY : Form
+    public partial class CRUD_FRM_NOTIFY_NEW_VER : Form
     {
-        public CRUD_FRM_NOTIFY()
+        public CRUD_FRM_NOTIFY_NEW_VER()
         {
             InitializeComponent();
         }
+        
         DataTable dt = new DataTable();
         private DataTable NOTIFY_DATA_SELECT(string ARG_QTYPE, string ARG_DATE)
         {
@@ -170,8 +175,10 @@ namespace WindowsFormsAppNotification
                     OP_CD = item["OP_CD"].ToString();
                     MachineNM = item["MACHINE_NM"].ToString();
                     Warning = item["CONTENT"].ToString();
-                    TestPostMessage(":factory:Plant: " + Line_NM +"\n Area: " +Area_NM + "\n Machine: " + MachineNM + "\n :scream:Warning: " + Warning + "\n Time: " + HMS);
-                    string res = SendPushNotification(Topics, Title, Content, urlImages, Line_NM, Area_NM, MachineNM, Warning);
+
+                    //TestPostMessage(":factory:Plant: " + Line_NM +"\n Area: " +Area_NM + "\n Machine: " + MachineNM + "\n :scream:Warning: " + Warning + "\n Time: " + HMS);
+                    string res = SendPushNotification(Topics, Title, Content, urlImages, Line_NM, Area_NM, MachineNM, MC_CODE, Warning);
+                    SendPushNotificationIOS(Topics, Title, Content, urlImages, Line_NM, Area_NM, MachineNM, MC_CODE, Warning);
                     if (!string.IsNullOrEmpty(res))
                     {
                         lblResponse.Text = res;
@@ -194,26 +201,17 @@ namespace WindowsFormsAppNotification
                 MessageBox.Show(ex.Message);
             }
         }
-
-        private string SendPushNotification(string Topics, string Title, string Content, string urlImages, string Line_NM, string Area_NM, string MachineNM, string Warning)
+        private string SendPushNotificationIOS(string Topics, string Title, string Body, string urlImages, string Line_NM, string Area_NM, string MachineNM, string MachineCD, string Warning)
         {
             string response;
-
             try
             {
                 // From: https://console.firebase.google.com/project/x.y.z/settings/general/android:x.y.z
-
-                // Projekt-ID: x.y.z
-                // Web-API-Key: A...Y (39 chars)
-                // App-ID: 1:...:android:...
-
                 // From https://console.firebase.google.com/project/x.y.z/settings/
-                // cloudmessaging/android:x,y,z
-                // Server-Key: AAAA0...    ...._4
 
-                string serverKey = "AAAAIPWphRI:APA91bG3gcoKuQ4pKgKj4bSrD99PNbxRKXSeBflwW60KQ2DV1vtWoDnLpmbblxnP5xl5lnwp1_MpIzNMpygUC05b7DS9Run1AIAhJiXn4ev5X7Ko3j49qBo-xblFC6nf__vBYWoEha6Q"; // Something very long
-                string senderId = "141560481042";
-                string deviceId = "/topics/" + Topics;
+                string serverKey = "AAAAib5dSi8:APA91bHpGlSq18m8gZdlg0y5NdGUIwyW9rUnXzmzdt9PtJa0i0a_t1B-X8oBcmb7N5zdaIn1HJr0QxFiGPTgBq0b8G_mm593NFNWfZjHqcWA6UxdxvXOT4-Q8LkkNue0gW_XwBPp8rpD"; // Something very long
+                string senderId = "591604304431";
+                string deviceId = "/topics/013_IOS";
                 //string deviceId = "dj9...c:APA...    .....WTw"; // Also something very long, 
                 // got from android
                 //string deviceId = "//topics/all";             // Use this to notify all devices, 
@@ -223,53 +221,34 @@ namespace WindowsFormsAppNotification
 
                 tRequest.Method = "post";
                 tRequest.ContentType = "application/json";
-                string title = Title, msg = Content;
+                string title = Title, msg = Body;
 
                 var data = new
                 {
                     to = deviceId,
-                    //to = deviceId,
-                    //notification = new
-                    //{
-                    //    body = msg,
-                    //    title = title,
-                    //    image = urlImages,
-                    //    sound = "Enable"
-                    //},
+                    //   to = deviceId,
                     data = new
                     {
-                        PLANT_NM = Line_NM,
-                        AREA = Area_NM,
-                        MACHINE = MachineNM,
-                        WARNING = Warning,
-                        TITLE = title,
-                        DATE = DateTime.Now.ToString()
-                    },
-                    payload = new
-                    {
-                        aps = new
-                        {
-                            alert = new
-                            {
-                                title = "Đây là Alert header",
-                                body = "Đây là Body"
-                            },
-                            data = new
-                            {
-                                PLANT_NM = Line_NM,
-                                AREA = Area_NM,
-                                MACHINE = MachineNM,
-                                WARNING = Warning,
-                                TITLE = title,
-                                DATE = DateTime.Now.ToString()
-                            }
-                        },
-                        sound = "default",
-                        category = "message",
-                        badge = 1
+                        TITLE = Title,
+                        BODY = msg,
+                        MC_CD = MachineNM,
+                        MC_NM = MachineNM,
+                        AREA = string.Concat(Line_NM, " - ", Area_NM),
+                        DESC = Warning,
+                        TIME = DateTime.Now.ToString("dd/MM HH:mm"),
+                        KIND_IMG = "BACKPART"
                     }
-
+                    ,
+                    notification = new
+                    {
+                        body = msg,
+                        title = title,
+                        image = urlImages,
+                        sound = "Enable"
+                    }
                 };
+
+
 
                 var serializer = new JavaScriptSerializer();
                 var json = serializer.Serialize(data);
@@ -301,6 +280,116 @@ namespace WindowsFormsAppNotification
 
             return response;
         }
+
+      
+
+        class AxisTarget
+        {
+            [JsonProperty("Simulator Target Bundle")]
+            public string TARGET_PHUOC { get; set; }
+        }
+        private string SendPushNotification(string Topics, string Title, string Body, string urlImages, string Line_NM, string Area_NM, string MachineNM, string MachineCD, string Warning)
+        {
+            string response;
+
+            try
+            {
+                // From: https://console.firebase.google.com/project/x.y.z/settings/general/android:x.y.z
+
+                // Projekt-ID: x.y.z
+                // Web-API-Key: A...Y (39 chars)
+                // App-ID: 1:...:android:...
+
+                // From https://console.firebase.google.com/project/x.y.z/settings/
+                // cloudmessaging/android:x,y,z
+                // Server-Key: AAAA0...    ...._4
+
+                string serverKey = "AAAAib5dSi8:APA91bHpGlSq18m8gZdlg0y5NdGUIwyW9rUnXzmzdt9PtJa0i0a_t1B-X8oBcmb7N5zdaIn1HJr0QxFiGPTgBq0b8G_mm593NFNWfZjHqcWA6UxdxvXOT4-Q8LkkNue0gW_XwBPp8rpD"; // Something very long
+                string senderId = "591604304431";
+                string deviceId = "/topics/013";
+                //string deviceId = "dj9...c:APA...    .....WTw"; // Also something very long, 
+                // got from android
+                //string deviceId = "//topics/all";             // Use this to notify all devices, 
+                // but App must be subscribed to 
+                // topic notification
+                WebRequest tRequest = WebRequest.Create("https://fcm.googleapis.com/fcm/send");
+
+                tRequest.Method = "post";
+                tRequest.ContentType = "application/json";
+                string title = Title, msg = Body;
+                string target = "com.csi.scadaIos";
+                AxisTarget tar = new WindowsFormsAppNotification.CRUD_FRM_NOTIFY_NEW_VER.AxisTarget { TARGET_PHUOC = target };
+
+            var data = new
+                {
+                    to = deviceId,
+                    //   to = deviceId,
+                    data = new
+                    {
+                        TITLE = Title,
+                        BODY = msg,
+                        MC_CD = MachineNM,
+                        MC_NM = MachineNM,
+                        AREA = string.Concat(Line_NM, " - ", Area_NM),
+                        DESC = Warning,
+                        TIME = DateTime.Now.ToString("dd/MM HH:mm"),
+                        KIND_IMG = "BACKPART",
+                        picture_url = urlImages
+                    },
+                //aps = new
+                //{
+                //notification = new
+                //{
+                //    title = "Đây là Alert header",
+                //    body = "Đây là Body",
+                //},
+                //sound = "default",
+                //category = "message",
+                //badge = 1
+                //PLANT_NM = Line_NM,
+                //AREA = Area_NM,
+                //MACHINE = MachineNM,
+                //WARNING = Warning,
+                //TITLE = title,
+                //DATE = DateTime.Now.ToString(),
+
+            };
+
+               
+
+                var serializer = new JavaScriptSerializer();
+                var json = serializer.Serialize(data);
+                Byte[] byteArray = Encoding.UTF8.GetBytes(json);
+                tRequest.Headers.Add(string.Format("Authorization: key={0}", serverKey));
+                tRequest.Headers.Add(string.Format("Sender: id={0}", senderId));
+                tRequest.ContentLength = byteArray.Length;
+
+                using (Stream dataStream = tRequest.GetRequestStream())
+                {
+                    dataStream.Write(byteArray, 0, byteArray.Length);
+                    using (WebResponse tResponse = tRequest.GetResponse())
+                    {
+                        using (Stream dataStreamResponse = tResponse.GetResponseStream())
+                        {
+                            using (StreamReader tReader = new StreamReader(dataStreamResponse))
+                            {
+                                String sResponseFromServer = tReader.ReadToEnd();
+                                response = sResponseFromServer;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                response = ex.Message;
+            }
+
+            return response;
+        }
+
+       
+
         int cCount = 0;
         private async void tmr_Tick(object sender, EventArgs e)
         {
@@ -339,7 +428,7 @@ namespace WindowsFormsAppNotification
         }
         void TestPostMessage(string msg)
         {
-          //  var urlWithAccessToken = "https://hooks.slack.com/services/{YOUR}/{ACCESS}/{TOKENS}";
+            //  var urlWithAccessToken = "https://hooks.slack.com/services/{YOUR}/{ACCESS}/{TOKENS}";
 
             var urlWithAccessToken = "https://hooks.slack.com/services/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";
             var client = new SlackClient(urlWithAccessToken);
@@ -356,6 +445,35 @@ namespace WindowsFormsAppNotification
         private void btnZalo_Click(object sender, EventArgs e)
         {
             SendMsgZalo();
+        }
+
+        private void btnTest_Click(object sender, EventArgs e)
+        {
+            string res = SendPushNotification("013", "Xin chào!", "Hôm nay bạn thế nào?", "https://thumbs.dreamstime.com/b/happy-cat-closeup-portrait-funny-smile-cardboard-young-blue-background-102078702.jpg", "Some Plant", "SomeWhere", "This is a test Data (BP-001-TEST-AAA)", "BP-001-TEST-AAA", "PV:00,Min:00,Max:00");
+            if (!string.IsNullOrEmpty(res))
+            {
+                lblResponse.Text = res;
+            }
+            string res1 = SendPushNotificationIOS("013", "Xin chào!", "Hôm nay bạn thế nào?", "https://thumbs.dreamstime.com/b/happy-cat-closeup-portrait-funny-smile-cardboard-young-blue-background-102078702.jpg", "Some Plant", "SomeWhere", "This is a test Data (BP-001-TEST-AAA)", "BP-001-TEST-AAA", "PV:00,Min:00,Max:00");
+            if (!string.IsNullOrEmpty(res))
+            {
+                lblResponse.Text = res1;
+            }
+        }
+        // I suggest to create by specifying a name for instance while we have multiple projects to setup.
+        
+        private  void btnTestSDKAdmin_Click(object sender, EventArgs e)
+        {
+            string res = SendPushNotificationIOS("013", "Thông Báo UI IOS", "ABCDEF Nội dung", "", "013-001", "Assembly", "Backpart Molding (BP-001-XXX-AAA)", "BP-001-XXX-AAA", "PV:50,Min:55,Max:60");
+            if (!string.IsNullOrEmpty(res))
+            {
+                lblResponse.Text = res;
+            }
+        }
+    
+        private void CRUD_FRM_NOTIFY_NEW_VER_Load(object sender, EventArgs e)
+        {
+           
         }
     }
 }

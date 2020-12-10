@@ -16,7 +16,7 @@ namespace WindowsFormsAppNotification
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new CRUD_FRM_NOTIFY());
+            Application.Run(new FRM_PUSH_NOTIFICATION());
         }
     }
 }
