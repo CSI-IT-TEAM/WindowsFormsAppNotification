@@ -17,6 +17,7 @@ using ZaloDotNetSDK;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Newtonsoft.Json;
+using System.Globalization;
 
 namespace WindowsFormsAppNotification
 {
@@ -130,9 +131,10 @@ namespace WindowsFormsAppNotification
                     OP_CD = item["OP_CD"].ToString();
                     MachineNM = item["MACHINE_NM"].ToString();
                     Warning = item["CONTENT"].ToString();
+                    DateTime TimeAlarm = DateTime.ParseExact(string.Concat(YMD, " ", HMS), "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
                     List<NotifysModel> lstModel = new List<WindowsFormsAppNotification.NotifysModel>();
-                    lstModel.Add(new NotifysModel("ANDROID", Title, Content, urlImages,LINE_CD, Line_NM, Area_NM, MC_CODE, MachineNM, Warning));
-                    lstModel.Add(new NotifysModel("IOS", Title, Content, urlImages, LINE_CD, Line_NM, Area_NM, MC_CODE, MachineNM, Warning));
+                    lstModel.Add(new NotifysModel("ANDROID", Title, Content, urlImages,LINE_CD, Line_NM, Area_NM, MC_CODE, MachineNM, Warning, TimeAlarm));
+                    lstModel.Add(new NotifysModel("IOS", Title, Content, urlImages, LINE_CD, Line_NM, Area_NM, MC_CODE, MachineNM, Warning, TimeAlarm));
                     foreach (NotifysModel model in lstModel)
                     {
                         string res = SendPushNotification(model);
@@ -179,13 +181,13 @@ namespace WindowsFormsAppNotification
                             to = string.Concat("/topics/", model.Line_cd),
                             data = new
                             {
-                                TITLE = model.Title,
+                                TITLE =   string.Concat(Emoji.Bell," ", model.Title),
                                 BODY = model.Body,
                                 MC_CD = model.MachineNM,
                                 MC_NM = model.MachineCD,
                                 AREA = string.Concat(model.Line_Nm, " - ", model.Area_NM),
                                 DESC = model.Warning,
-                                TIME = DateTime.Now.ToString(),
+                                TIME = model.TimeAlm.ToString(),
                                 KIND_IMG = "BACKPART",
                                 picture_url = model.urlImages
                             }
@@ -203,13 +205,13 @@ namespace WindowsFormsAppNotification
                                 MC_NM = model.MachineCD,
                                 AREA = string.Concat(model.Line_Nm, " - ", model.Area_NM),
                                 DESC = model.Warning,
-                                TIME = DateTime.Now.ToString(),
+                                TIME = model.TimeAlm.ToString(),
                                 KIND_IMG = "BACKPART",
                                 picture_url = model.urlImages
                             },
                             notification = new
                             {
-                                title = model.Title,
+                                title = string.Concat(Emoji.Bell, " ", model.Title),
                                 body = model.Body,
                                 image = model.urlImages,
                                 sound = "Enable"
@@ -247,8 +249,6 @@ namespace WindowsFormsAppNotification
 
            
         }
-
-       
 
         int cCount = 0;
         private async void tmr_Tick(object sender, EventArgs e)
@@ -309,9 +309,18 @@ namespace WindowsFormsAppNotification
 
         private void btnTest_Click(object sender, EventArgs e)
         {
-            List<NotifysModel> lstModel = new List<WindowsFormsAppNotification.NotifysModel>();
-            lstModel.Add(new NotifysModel("ANDROID", "Phước Xin Chào!", "Hôm nay bạn thế nào?", "", "013", "Plant G", "SomeWhere", "BP-001-TEST-MACHINE", "THIS IS A TEST MACHINE", "Thông báo nhiệt độ"));
-            lstModel.Add(new NotifysModel("IOS", "Phước Xin Chào!", "Hôm nay bạn thế nào?", "", "013", "Plant G", "SomeWhere", "BP-001-TEST-MACHINE", "THIS IS A TEST MACHINE", "Thông báo nhiệt độ"));
+            DateTime TimeAlm = new DateTime();
+           List <NotifysModel> lstModel = new List<WindowsFormsAppNotification.NotifysModel>();
+            try
+            {
+                TimeAlm = DateTime.Now;
+            }
+            catch(Exception ex)
+            {
+
+            }
+            lstModel.Add(new NotifysModel("ANDROID", "Đây là tiêu đề thông báo!",  "Nội dung của thông báo", "", "013", "Plant G", "SomeWhere", "BP-001-TEST-MACHINE", "THIS IS A TEST MACHINE", "PostMan2", TimeAlm));
+            lstModel.Add(new NotifysModel("IOS","Xin Chào!", "Hôm nay bạn thế nào?", "", "013", "Plant G", "SomeWhere", "BP-001-TEST-MACHINE", "THIS IS A TEST MACHINE", "PostMan2", TimeAlm));
             foreach (NotifysModel model in lstModel)
             {
                 string res = SendPushNotification(model);

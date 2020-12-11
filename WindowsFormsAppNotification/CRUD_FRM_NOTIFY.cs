@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -170,8 +171,9 @@ namespace WindowsFormsAppNotification
                     OP_CD = item["OP_CD"].ToString();
                     MachineNM = item["MACHINE_NM"].ToString();
                     Warning = item["CONTENT"].ToString();
-                    TestPostMessage(":factory:Plant: " + Line_NM +"\n Area: " +Area_NM + "\n Machine: " + MachineNM + "\n :scream:Warning: " + Warning + "\n Time: " + HMS);
-                    string res = SendPushNotification(Topics, Title, Content, urlImages, Line_NM, Area_NM, MachineNM, Warning);
+                    DateTime TimeAlarm = DateTime.ParseExact(string.Concat(YMD," ",HMS), "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                    //TestPostMessage(":factory:Plant: " + Line_NM +"\n Area: " +Area_NM + "\n Machine: " + MachineNM + "\n :scream:Warning: " + Warning + "\n Time: " + HMS);
+                    string res = SendPushNotification(Topics, Title, Content, urlImages, Line_NM, Area_NM, MachineNM, Warning, TimeAlarm);
                     if (!string.IsNullOrEmpty(res))
                     {
                         lblResponse.Text = res;
@@ -195,7 +197,7 @@ namespace WindowsFormsAppNotification
             }
         }
 
-        private string SendPushNotification(string Topics, string Title, string Content, string urlImages, string Line_NM, string Area_NM, string MachineNM, string Warning)
+        private string SendPushNotification(string Topics, string Title, string Content, string urlImages, string Line_NM, string Area_NM, string MachineNM, string Warning,DateTime TimeAlarm)
         {
             string response;
 
@@ -243,7 +245,7 @@ namespace WindowsFormsAppNotification
                         MACHINE = MachineNM,
                         WARNING = Warning,
                         TITLE = title,
-                        DATE = DateTime.Now.ToString()
+                        DATE = TimeAlarm.ToString()
                     },
                     payload = new
                     {
@@ -261,7 +263,7 @@ namespace WindowsFormsAppNotification
                                 MACHINE = MachineNM,
                                 WARNING = Warning,
                                 TITLE = title,
-                                DATE = DateTime.Now.ToString()
+                                DATE = TimeAlarm.ToString()
                             }
                         },
                         sound = "default",

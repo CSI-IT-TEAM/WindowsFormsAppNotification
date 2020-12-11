@@ -30,6 +30,7 @@
         {
             this.components = new System.ComponentModel.Container();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.lblTimer = new System.Windows.Forms.Label();
             this.btnTest = new System.Windows.Forms.Button();
             this.btnGet = new System.Windows.Forms.Button();
             this.lblResponse = new System.Windows.Forms.Label();
@@ -38,7 +39,6 @@
             this.gridControl1 = new DevExpress.XtraGrid.GridControl();
             this.gridView1 = new DevExpress.XtraGrid.Views.Grid.GridView();
             this.tmr = new System.Windows.Forms.Timer(this.components);
-            this.lblTimer = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gridControl1)).BeginInit();
@@ -54,14 +54,26 @@
             this.groupBox1.Controls.Add(this.lblTotal);
             this.groupBox1.Location = new System.Drawing.Point(12, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(701, 61);
+            this.groupBox1.Size = new System.Drawing.Size(387, 61);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Notifications";
             // 
+            // lblTimer
+            // 
+            this.lblTimer.AutoSize = true;
+            this.lblTimer.ForeColor = System.Drawing.Color.Blue;
+            this.lblTimer.Location = new System.Drawing.Point(77, 1);
+            this.lblTimer.Name = "lblTimer";
+            this.lblTimer.Size = new System.Drawing.Size(141, 13);
+            this.lblTimer.TabIndex = 1;
+            this.lblTimer.Text = "How Many Time Countdown";
+            // 
             // btnTest
             // 
-            this.btnTest.Location = new System.Drawing.Point(539, 11);
+            this.btnTest.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnTest.Location = new System.Drawing.Point(225, 11);
             this.btnTest.Name = "btnTest";
             this.btnTest.Size = new System.Drawing.Size(75, 44);
             this.btnTest.TabIndex = 3;
@@ -71,7 +83,9 @@
             // 
             // btnGet
             // 
-            this.btnGet.Location = new System.Drawing.Point(620, 11);
+            this.btnGet.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnGet.Location = new System.Drawing.Point(306, 11);
             this.btnGet.Name = "btnGet";
             this.btnGet.Size = new System.Drawing.Size(75, 44);
             this.btnGet.TabIndex = 1;
@@ -130,26 +144,15 @@
             this.tmr.Interval = 1000;
             this.tmr.Tick += new System.EventHandler(this.tmr_Tick);
             // 
-            // lblTimer
-            // 
-            this.lblTimer.AutoSize = true;
-            this.lblTimer.ForeColor = System.Drawing.Color.Blue;
-            this.lblTimer.Location = new System.Drawing.Point(77, 1);
-            this.lblTimer.Name = "lblTimer";
-            this.lblTimer.Size = new System.Drawing.Size(141, 13);
-            this.lblTimer.TabIndex = 1;
-            this.lblTimer.Text = "How Many Time Countdown";
-            // 
             // FRM_PUSH_NOTIFICATION
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.ClientSize = new System.Drawing.Size(725, 279);
+            this.ClientSize = new System.Drawing.Size(405, 77);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Name = "FRM_PUSH_NOTIFICATION";
-            this.Text = "CRUD_FRM_NOTIFY";
             this.Load += new System.EventHandler(this.CRUD_FRM_NOTIFY_NEW_VER_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();

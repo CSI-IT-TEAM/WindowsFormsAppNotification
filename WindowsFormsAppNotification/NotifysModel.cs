@@ -18,7 +18,8 @@ namespace WindowsFormsAppNotification
         public string MachineCD;
         public string MachineNM;
         public string Warning;
-        public NotifysModel(string TypeDevice,string Title, string Body, string urlImages, string Line_cd, string Line_Nm, string Area_NM, string MachineCD, string MachineNM,string Warning)
+        public DateTime TimeAlm;
+        public NotifysModel(string TypeDevice,string Title, string Body, string urlImages, string Line_cd, string Line_Nm, string Area_NM, string MachineCD, string MachineNM,string Warning,DateTime TimeAlm)
         {
             this.TypeDevice = TypeDevice;
             this.Title = Title;
@@ -30,6 +31,7 @@ namespace WindowsFormsAppNotification
             this.MachineCD = MachineCD;
             this.MachineNM = MachineNM;
             this.Warning = Warning;
+            this.TimeAlm = TimeAlm;
         }
     }
 }
