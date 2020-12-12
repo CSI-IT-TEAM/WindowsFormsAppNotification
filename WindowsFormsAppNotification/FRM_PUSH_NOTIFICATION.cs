@@ -116,8 +116,11 @@ namespace WindowsFormsAppNotification
                 if (item != null)
                 {
                     Factory = item["FACTORY"].ToString();
-                    YMD = item["YMD"].ToString();
-                    HMS = item["HMS"].ToString();
+                    string ymd_ = item["YMD"].ToString();
+                    string hms_ = item["HMS"].ToString();
+                    YMD = ymd_.Substring(0, 4) + "-" + ymd_.Substring(4, 2) + "-" + ymd_.Substring(6, 2);
+
+                    HMS = hms_.Substring(0, 2) + ":" + hms_.Substring(2, 2) + ":" + hms_.Substring(4, 2);
                     Topics = item["LINE_NM"].ToString().Replace(" ", "");
                     LINE_CD = item["LINE_CD"].ToString();
                     MLINE_CD = item["MLINE_CD"].ToString();
@@ -133,15 +136,15 @@ namespace WindowsFormsAppNotification
                     Warning = item["CONTENT"].ToString();
                     DateTime TimeAlarm = DateTime.ParseExact(string.Concat(YMD, " ", HMS), "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
                     List<NotifysModel> lstModel = new List<WindowsFormsAppNotification.NotifysModel>();
-                    lstModel.Add(new NotifysModel("ANDROID", Title, Content, urlImages,LINE_CD, Line_NM, Area_NM, MC_CODE, MachineNM, Warning, TimeAlarm));
-                    lstModel.Add(new NotifysModel("IOS", Title, Content, urlImages, LINE_CD, Line_NM, Area_NM, MC_CODE, MachineNM, Warning, TimeAlarm));
+                    lstModel.Add(new NotifysModel("ANDROID", Title, Content, urlImages,LINE_CD, Line_NM, Area_NM, MC_CODE + " [" + MC_ID + "]", MachineNM, Warning, TimeAlarm));
+                    lstModel.Add(new NotifysModel("IOS", Title, Content, urlImages, LINE_CD, Line_NM, Area_NM, MC_CODE + " [" + MC_ID + "]", MachineNM, Warning, TimeAlarm));
                     foreach (NotifysModel model in lstModel)
                     {
                         string res = SendPushNotification(model);
                         if (!string.IsNullOrEmpty(res))
                         {
                             lblResponse.Text = res;
-                            if (NOTIFY_DATA_UPDATE(Factory, YMD, HMS, LINE_CD, MLINE_CD, OP_CD, MachineNM, MC_ID, MC_CODE))
+                            if (NOTIFY_DATA_UPDATE(Factory, ymd_, hms_, LINE_CD, MLINE_CD, OP_CD, MachineNM, MC_ID, MC_CODE))
                             {
                                 dt = NOTIFY_DATA_SELECT("Q", DateTime.Now.ToString());
                                 gridControl1.DataSource = dt;
@@ -183,8 +186,8 @@ namespace WindowsFormsAppNotification
                             {
                                 TITLE =   string.Concat(Emoji.Bell," ", model.Title),
                                 BODY = model.Body,
-                                MC_CD = model.MachineNM,
-                                MC_NM = model.MachineCD,
+                                MC_CD = model.MachineCD,
+                                MC_NM = model.MachineNM,
                                 AREA = string.Concat(model.Line_Nm, " - ", model.Area_NM),
                                 DESC = model.Warning,
                                 TIME = model.TimeAlm.ToString(),
@@ -201,8 +204,8 @@ namespace WindowsFormsAppNotification
                             {
                                 TITLE = model.Title,
                                 BODY = model.Body,
-                                MC_CD = model.MachineNM,
-                                MC_NM = model.MachineCD,
+                                MC_CD = model.MachineCD,
+                                MC_NM = model.MachineNM,
                                 AREA = string.Concat(model.Line_Nm, " - ", model.Area_NM),
                                 DESC = model.Warning,
                                 TIME = model.TimeAlm.ToString(),
