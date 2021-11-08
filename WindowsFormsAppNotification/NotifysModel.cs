@@ -9,6 +9,7 @@ namespace WindowsFormsAppNotification
     class NotifysModel
     {
         public string TypeDevice;
+        public string Mail;
         public string Title;
         public string Body;
         public string urlImages;
@@ -19,9 +20,10 @@ namespace WindowsFormsAppNotification
         public string MachineNM;
         public string Warning;
         public DateTime TimeAlm;
-        public NotifysModel(string TypeDevice,string Title, string Body, string urlImages, string Line_cd, string Line_Nm, string Area_NM, string MachineCD, string MachineNM,string Warning,DateTime TimeAlm)
+        public NotifysModel(string TypeDevice,string Mail,string Title, string Body, string urlImages, string Line_cd, string Line_Nm, string Area_NM, string MachineCD, string MachineNM,string Warning,DateTime TimeAlm)
         {
             this.TypeDevice = TypeDevice;
+            this.Mail = Mail;
             this.Title = Title;
             this.Body = Body;
             this.urlImages = urlImages;

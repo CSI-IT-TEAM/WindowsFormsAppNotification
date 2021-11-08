@@ -18,6 +18,7 @@ using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Newtonsoft.Json;
 using System.Globalization;
+using Google.Cloud.Firestore;
 
 namespace WindowsFormsAppNotification
 {
@@ -27,7 +28,7 @@ namespace WindowsFormsAppNotification
         {
             InitializeComponent();
         }
-        
+
         DataTable dt = new DataTable();
         private DataTable NOTIFY_DATA_SELECT(string ARG_QTYPE, string ARG_DATE)
         {
@@ -58,7 +59,31 @@ namespace WindowsFormsAppNotification
                 return null;
             }
         }
-        private bool NOTIFY_DATA_UPDATE(string ARG_FACTORY, string ARG_YMD, string ARG_HMS, string ARG_LINE_CD, string ARG_MLINE_CD, string ARG_OP_CD, string ARG_MC_NAME, string ARG_MC_ID, string ARG_MC_CODE)
+
+        private DataTable NOTIFY_MASTER_MAIL_SELECT(string ARG_QTYPE)
+        {
+            try
+            {
+                using (OracleConnection conn = Database.GetDBConnectionVJREAL("MES"))
+                {
+                    conn.Open();
+                    OracleCommand command = new OracleCommand("MES.PKG_SMT_SCADA_COCKPIT.MASTER_MAIL_MGMT_SELECT", conn);
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.Add("ARG_QTYPE", OracleDbType.Varchar2).Value = ARG_QTYPE;
+                    command.Parameters.Add("OUT_CURSOR", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+                    using (DataTable dt = new DataTable())
+                    {
+                        (new OracleDataAdapter(command)).Fill(dt);
+                        return dt;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+        private bool NOTIFY_DATA_UPDATE(string ARG_MAIL, string ARG_FACTORY, string ARG_YMD, string ARG_HMS, string ARG_LINE_CD, string ARG_MLINE_CD, string ARG_OP_CD, string ARG_MC_NAME, string ARG_MC_ID, string ARG_MC_CODE)
         {
             try
             {
@@ -67,6 +92,7 @@ namespace WindowsFormsAppNotification
                     conn.Open();
                     OracleCommand command = new OracleCommand("MES.PKG_SMT_SCADA_COCKPIT.NOTIFY_DATA_UPDATE", conn);
                     command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.Add("ARG_MAIL", OracleDbType.Varchar2).Value = ARG_MAIL;
                     command.Parameters.Add("ARG_FACTORY", OracleDbType.Varchar2).Value = ARG_FACTORY;
                     command.Parameters.Add("ARG_YMD", OracleDbType.Varchar2).Value = ARG_YMD;
                     command.Parameters.Add("ARG_HMS", OracleDbType.Varchar2).Value = ARG_HMS;
@@ -111,10 +137,11 @@ namespace WindowsFormsAppNotification
             {
                 string YMD = string.Empty, HMS = string.Empty, Factory = string.Empty, LINE_CD = string.Empty, MLINE_CD = string.Empty,
                      Topics = string.Empty, Title = string.Empty, Content = string.Empty, urlImages = string.Empty, Line_NM = string.Empty,
-                     Area_NM = string.Empty, MachineNM = string.Empty, Warning = string.Empty, OP_CD = string.Empty, MC_ID = string.Empty, MC_CODE = string.Empty;
+                     Area_NM = string.Empty, MachineNM = string.Empty, Warning = string.Empty, OP_CD = string.Empty, MC_ID = string.Empty, MC_CODE = string.Empty, EMAIL = string.Empty;
 
                 if (item != null)
                 {
+                    EMAIL = item["EMAIL_ADDRESS"].ToString();
                     Factory = item["FACTORY"].ToString();
                     string ymd_ = item["YMD"].ToString();
                     string hms_ = item["HMS"].ToString();
@@ -136,15 +163,16 @@ namespace WindowsFormsAppNotification
                     Warning = item["CONTENT"].ToString();
                     DateTime TimeAlarm = DateTime.ParseExact(string.Concat(YMD, " ", HMS), "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
                     List<NotifysModel> lstModel = new List<WindowsFormsAppNotification.NotifysModel>();
-                    lstModel.Add(new NotifysModel("ANDROID", Title, Content, urlImages,LINE_CD, Line_NM, Area_NM, MC_CODE + " [" + MC_ID + "]", MachineNM, Warning, TimeAlarm));
-                    lstModel.Add(new NotifysModel("IOS", Title, Content, urlImages, LINE_CD, Line_NM, Area_NM, MC_CODE + " [" + MC_ID + "]", MachineNM, Warning, TimeAlarm));
+                    //Android Push
+                    lstModel.Add(new NotifysModel("ANDROID", EMAIL, Title, Content, urlImages, LINE_CD, Line_NM, Area_NM, MC_CODE + " [" + MC_ID + "]", MachineNM, Warning, TimeAlarm));
+                    lstModel.Add(new NotifysModel("IOS", EMAIL, Title, Content, urlImages, LINE_CD, Line_NM, Area_NM, MC_CODE + " [" + MC_ID + "]", MachineNM, Warning, TimeAlarm));
                     foreach (NotifysModel model in lstModel)
                     {
                         string res = SendPushNotification(model);
                         if (!string.IsNullOrEmpty(res))
                         {
                             lblResponse.Text = res;
-                            if (NOTIFY_DATA_UPDATE(Factory, ymd_, hms_, LINE_CD, MLINE_CD, OP_CD, MachineNM, MC_ID, MC_CODE))
+                            if (NOTIFY_DATA_UPDATE(EMAIL, Factory, ymd_, hms_, LINE_CD, MLINE_CD, OP_CD, MachineNM, MC_ID, MC_CODE))
                             {
                                 dt = NOTIFY_DATA_SELECT("Q", DateTime.Now.ToString());
                                 gridControl1.DataSource = dt;
@@ -181,17 +209,17 @@ namespace WindowsFormsAppNotification
                     case "ANDROID":
                         data = new
                         {
-                            to = string.Concat("/topics/", model.Line_cd),
+                            to = string.Concat("/topics/", rdOnce.Checked ? cboMail.SelectedValue.ToString().Replace("@", "_").Replace("&","_").ToUpper() : model.Mail.Replace("@", "_").Replace("&", "_").ToUpper()),
+                            //to = "e7PsqIaKTA-CFL6AQ8Inea:APA91bHJWI4dRqrtJt3vuUraoNIWrA3XnblIrjgaYApW2iV5FCbR7lmOEbtc_9mrW5SCjxbxW38yv0bDKYMHsQ6oKrnxje7A8us8_jlrXe47IgOL_nrNaBzdNu_yH4-I-Rz7NSj2m8bA",
                             data = new
                             {
-                                TITLE =   string.Concat(Emoji.Bell," ", model.Title),
+                                TITLE = string.Concat(Emoji.Bell, model.Title),
                                 BODY = model.Body,
                                 MC_CD = model.MachineCD,
                                 MC_NM = model.MachineNM,
                                 AREA = string.Concat(model.Line_Nm, " - ", model.Area_NM),
                                 DESC = model.Warning,
                                 TIME = model.TimeAlm.ToString(),
-                                KIND_IMG = "BACKPART",
                                 picture_url = model.urlImages
                             }
                         };
@@ -199,7 +227,8 @@ namespace WindowsFormsAppNotification
                     case "IOS":
                         data = new
                         {
-                            to = string.Concat("/topics/", model.Line_cd,"_",model.TypeDevice),
+                            //to = string.Concat("/topics/", model.Line_cd, "_", model.TypeDevice),
+                            to = string.Concat("/topics/", rdOnce.Checked ? cboMail.SelectedValue.ToString().Replace("@", "_").Replace("&", "_").ToUpper() : model.Mail.Replace("@", "_").Replace("&", "_").ToUpper()),
                             data = new
                             {
                                 TITLE = model.Title,
@@ -209,7 +238,7 @@ namespace WindowsFormsAppNotification
                                 AREA = string.Concat(model.Line_Nm, " - ", model.Area_NM),
                                 DESC = model.Warning,
                                 TIME = model.TimeAlm.ToString(),
-                                KIND_IMG = "BACKPART",
+                                KIND_IMG = "BACKPART1",
                                 picture_url = model.urlImages
                             },
                             notification = new
@@ -250,7 +279,7 @@ namespace WindowsFormsAppNotification
                 return "error" + ex.Message;
             }
 
-           
+
         }
 
         int cCount = 0;
@@ -259,9 +288,10 @@ namespace WindowsFormsAppNotification
             try
             {
                 cCount++;
-                lblTimer.Text = "Remain: " +(60- cCount);
+                lblTimer.Text = "Remain: " + (60 - cCount);
                 if (cCount >= 60)
                 {
+                    rdAll.Checked = true;
                     cCount = 0;
                     dt = NOTIFY_DATA_SELECT("Q", DateTime.Now.ToString());
                     while (dt != null && dt.Rows.Count > 0)
@@ -313,17 +343,17 @@ namespace WindowsFormsAppNotification
         private void btnTest_Click(object sender, EventArgs e)
         {
             DateTime TimeAlm = new DateTime();
-           List <NotifysModel> lstModel = new List<WindowsFormsAppNotification.NotifysModel>();
+            List<NotifysModel> lstModel = new List<WindowsFormsAppNotification.NotifysModel>();
             try
             {
                 TimeAlm = DateTime.Now;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
 
             }
-            lstModel.Add(new NotifysModel("ANDROID", "Đây là tiêu đề thông báo!",  "Nội dung của thông báo", "", "013", "Plant G", "SomeWhere", "BP-001-TEST-MACHINE", "THIS IS A TEST MACHINE", "PostMan2", TimeAlm));
-            lstModel.Add(new NotifysModel("IOS","Xin Chào!", "Hôm nay bạn thế nào?", "", "013", "Plant G", "SomeWhere", "BP-001-TEST-MACHINE", "THIS IS A TEST MACHINE", "PostMan2", TimeAlm));
+             lstModel.Add(new NotifysModel("ANDROID", "PHUOC.IT@CHANGSHININC.COM", "Thông báo kiểm tra!", "Đây là một thông báo kiểm tra chức năng Push Notification", "", "000", "No Plant", "No Area", "TEST-PUSH-MACHINE-CODE", "Name & Kind of Machine", "Currenly, Present Value >= Min Value - 3 and Present Value <= Max Value + 3!", TimeAlm));
+            lstModel.Add(new NotifysModel("IOS", "TEST133@GMAIL.COM", "Thông báo kiểm tra!", "111Đây là một thông báo kiểm tra chức năng Push Notification", "", "000", "No Plant", "No Area", "TEST-PUSH-MACHINE-CODE", "Name & Kind of Machine", "Currenly, Present Value >= Min Value - 3 and Present Value <= Max Value + 3!", TimeAlm));
             foreach (NotifysModel model in lstModel)
             {
                 string res = SendPushNotification(model);
@@ -332,15 +362,82 @@ namespace WindowsFormsAppNotification
                     lblResponse.Text = res;
                 }
             }
-           
+
         }
         // I suggest to create by specifying a name for instance while we have multiple projects to setup.
-        
-       
-    
+
+
+
         private void CRUD_FRM_NOTIFY_NEW_VER_Load(object sender, EventArgs e)
         {
+            try
+            {
+                //Get Data for Mail Combobox 
+                DataTable dt = NOTIFY_MASTER_MAIL_SELECT("Q");
+                if (dt != null && dt.Rows.Count > 0)
+                {
+                    cboMail.DataSource = dt;
+                    cboMail.DisplayMember = "MAIL_ADDRESS";
+                    cboMail.ValueMember = "MAIL_ADDRESS";
+                }
+            }
+            catch
+            {
+
+              
+            }
            
+        }
+
+        private async void btnGetDocument_Click(object sender, EventArgs e)
+        {
+
+            // Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", Application.StartupPath + "\\scada-production-7bcdc4eb28be.json");
+            // FirestoreDb db = FirestoreDb.Create("591604304431");
+            // DocumentReference docref = db.Collection("Users").Document("7nkYDHYTYRPZq90VXicjTRK6tKA3");
+            // DocumentSnapshot documentSnaps = await docref.GetSnapshotAsync();
+            //if (documentSnaps.Exists)
+            // {
+            //     Dictionary<string, object> users = documentSnaps.ToDictionary();
+            //     foreach (var item in users)
+            //     {
+            //         string a = item.Value.ToString();
+            //     }
+            // }
+
+        }
+
+        private void rdOnce_CheckedChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                cCount = 0;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        private void btnReloadCombo_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                this.Cursor = Cursors.WaitCursor;
+                //Get Data for Mail Combobox 
+                DataTable dt = NOTIFY_MASTER_MAIL_SELECT("Q");
+                if (dt != null && dt.Rows.Count > 0)
+                {
+                    cboMail.DataSource = dt;
+                    cboMail.DisplayMember = "MAIL_ADDRESS";
+                    cboMail.ValueMember = "MAIL_ADDRESS";
+                }
+                this.Cursor = Cursors.Default;
+            }
+            catch
+            {
+                this.Cursor = Cursors.Default;
+            }
         }
     }
 }
